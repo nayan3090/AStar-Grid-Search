@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <array>
 
 using std::cout;
 using std::ifstream;
@@ -13,7 +14,11 @@ using std::string;
 using std::abs;
 using std::sort;
 
-enum class State {kEmpty, kObstacle, kClosed, kPath};
+enum class State {kEmpty, kObstacle, kClosed, kPath, kStart, kFinish};
+
+// directional deltas
+const int delta[4][2]{{-1, 0}, {0, -1}, {1, 0}, {0, 1}};
+const int len_delta = 4;
 
 vector<State> ParseLine(string line)
 {
@@ -51,7 +56,7 @@ vector<vector<State>> ReadBoardFile(string file_path)
 /**
  * Compare the F values of two cells.
  */
-bool Compare(vector<int> node1, vector<int> node2)
+bool Compare(const vector<int> node1, const vector<int> node2)
 {
     int node1f = node1[2] + node1[3];
     int node2f = node2[2] + node2[3];
@@ -74,13 +79,13 @@ int Heuristic(int x1, int y1, int x2, int y2)
 /*
  * Check valid neighboring nodes a
  */ 
-bool CheckValidCell(int x, int y, vector<vector<State>> grid)
+bool CheckValidCell(int x, int y, vector<vector<State>> &grid)
 {
     int m = grid.size();
     int n = grid[x].size();
-    if (x >= 0 && x <= m && y >= 0 && y <= n)
+    if (x >= 0 && x < m && y >= 0 && y < n)
     {
-        return (grid[x][y] == State::kClosed);
+        return (grid[x][y] == State::kEmpty);
     }
     return false;
 }
@@ -93,6 +98,29 @@ void AddToOpen(int x, int y, int g, int h, vector<vector<int>> &openlist, vector
     vector<int> node = {x, y, g, h};
     openlist.push_back(node);
     grid[x][y] = State::kClosed;
+}
+
+/** 
+ * Expand current nodes's neighbors and add them to the open list.
+ */
+void ExpandNeighbors(vector<int> &current_node, vector<vector<int>> &open, vector<vector<State>> &grid, int goal[2])
+{
+    int x = current_node[0];
+    int y = current_node[1];
+    int g = current_node[2];
+
+    for (int i = 0; i < len_delta; i++)
+    {
+        int x_new = x + delta[i][0];
+        int y_new = y + delta[i][1];
+
+        if (CheckValidCell(x_new, y_new, grid))
+        {
+            int g_new = g + 1;
+            int h_new = Heuristic(x_new, y_new, goal[0], goal[1]);
+            AddToOpen(x_new, y_new, g_new, h_new, open, grid);
+        }
+    }
 }
 
 /** 
@@ -111,14 +139,18 @@ vector<vector<State>> Search(vector<vector<State>> grid, int init[2], int goal[2
     {
         CellSort(&open);
         auto current_node = open.back();
+        open.pop_back();
         grid[current_node[0]][current_node[1]] = State::kPath;
         if (current_node[0] == goal[0] && current_node[1] == goal[1])
         {
+            grid[init[0]][init[1]] = State::kStart;
+            grid[goal[0]][goal[1]] = State::kFinish;
             return grid;
         }
+        ExpandNeighbors(current_node, open, grid, goal);
     }
     cout << "No path found!" << "\n";
-    return vector<vector<State>>{};
+    return vector<vector<State>>{}; 
 }
 
 string CellString(State cell)
@@ -127,7 +159,12 @@ string CellString(State cell)
     {
     case State::kObstacle:
         return "⛰️";
-    
+    case State::kPath:
+        return "🚗";
+    case State::kStart:
+        return "🚦";
+    case State::kFinish:
+        return "🏁";
     default:
         return "0";
     }
