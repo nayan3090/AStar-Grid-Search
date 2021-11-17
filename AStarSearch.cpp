@@ -4,7 +4,6 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <array>
 
 using std::cout;
 using std::ifstream;
@@ -78,7 +77,7 @@ int Heuristic(int x1, int y1, int x2, int y2)
 
 /*
  * Check valid neighboring nodes a
- */ 
+ */
 bool CheckValidCell(int x, int y, vector<vector<State>> &grid)
 {
     int m = grid.size();
@@ -103,7 +102,7 @@ void AddToOpen(int x, int y, int g, int h, vector<vector<int>> &openlist, vector
 /** 
  * Expand current nodes's neighbors and add them to the open list.
  */
-void ExpandNeighbors(vector<int> &current_node, vector<vector<int>> &open, vector<vector<State>> &grid, int goal[2])
+void ExpandNeighbors(const vector<int> &current_node, vector<vector<int>> &open, vector<vector<State>> &grid, int goal[2])
 {
     int x = current_node[0];
     int y = current_node[1];
@@ -170,7 +169,7 @@ string CellString(State cell)
     }
 }
 
-void PrintBoard(vector<vector<State>> board)
+void PrintBoard(const vector<vector<State>> board)
 {
     for(int i = 0; i < board.size(); i++)
     {
@@ -186,7 +185,7 @@ int main()
 {
     int init[2] = {0,0};
     int goal[2] = {4,5};
-    auto Board = ReadBoardFile("/home/t9882nd/Documents/Udacity_CPP/1.board");
+    auto Board = ReadBoardFile("1.board");
     auto Board_with_path = Search(Board, init, goal);
     PrintBoard(Board_with_path);
 }
